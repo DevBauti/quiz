@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0D0D0D;
+  --color-accent-primary: #F2F2F2;
+  --color-accent-secondary: #142617;
+  --color-text-primary: #BFBEB4;
+  --color-text-secondary: #59594F;
+  --color-detail: #142617;
+  --color-background: #0D0D0D;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-[#0D0D0D] text-[#BFBEB4];
+}
+
+/* Estilos personalizados para el tema oscuro */
+.dark {
+  color-scheme: dark;
+}
+
+/* Estilos responsivos adicionales */
+@media (max-width: 768px) {
+  .container {
+    @apply px-4;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    @apply px-2;
+  }
+}

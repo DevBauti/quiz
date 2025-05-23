@@ -1,0 +1,352 @@
+---
+const { title } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body class="bg-[#0D0D0D] text-[#BFBEB4]">
+    <main class="min-h-screen flex flex-col items-center justify-center p-4">
+      <!-- Hero Section -->
+      <section class="text-center mb-8 md:mb-12 w-full max-w-4xl mx-auto">
+        <h1 class="text-4xl md:text-5xl font-bold text-[#F2F2F2] mb-4">FastQuiz</h1>
+        <p class="text-lg md:text-xl text-[#59594F]">Master Your Studies with Smart, Dynamic Quizzes</p>
+      </section>
+
+      <!-- Drag and Drop Section -->
+      <section class="w-full max-w-2xl bg-[#142617] border border-[#BFBEB4] p-4 md:p-6 rounded-lg shadow-lg mb-8 md:mb-12">
+        <div
+          id="dropzone"
+          class="border-2 border-dashed border-[#BFBEB4] p-6 md:p-8 text-center rounded-lg hover:border-[#F2F2F2] transition cursor-pointer bg-[#0D0D0D]"
+        >
+          <p class="text-[#59594F]">Drag and drop your documents here or click to upload</p>
+          <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.doc,.docx,.txt" />
+        </div>
+        <!-- Lista de archivos -->
+        <div id="fileList" class="mt-4 space-y-2">
+          <!-- Los archivos se mostrarán aquí -->
+        </div>
+        <button
+          id="generateQuizBtn"
+          class="mt-4 w-full md:w-auto bg-[#142617] text-[#F2F2F2] px-6 py-3 rounded-lg hover:bg-[#142617]/80 transition disabled:opacity-50 border border-[#BFBEB4]"
+          disabled
+        >
+          Generar Quiz
+        </button>
+      </section>
+
+      <!-- Quiz Display Section -->
+      <section class="w-full max-w-4xl mx-auto">
+        <h2 class="text-xl md:text-2xl font-semibold text-[#F2F2F2] mb-6 text-center">Your Quizzes</h2>
+        <div class="relative w-full">
+          <!-- Main Quiz Container -->
+          <div class="w-full">
+            <div
+              id="quizContainer"
+              class="w-full flex flex-col gap-4 items-center"
+            >
+              <!-- Los quizzes se insertarán dinámicamente aquí -->
+            </div>
+          </div>
+        </div>
+      </section>
+      <style>
+        /* Asegura que cada item del quiz ocupe el 100% del contenedor */
+        #quizContainer > * {
+          width: 100%;
+        }
+      </style>
+    </main>
+
+    <script>
+      // Drag and Drop Handling
+      const dropzone = document.getElementById('dropzone') as HTMLDivElement;
+      const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+      const generateQuizBtn = document.getElementById('generateQuizBtn') as HTMLButtonElement;
+      const fileList = document.getElementById('fileList') as HTMLDivElement;
+      const WEBHOOK_URL = 'https://primary-production-3ad5.up.railway.app/webhook-test/e67a83fc-783c-4ca6-9ab7-11605bd27f2f';
+
+      // Función para actualizar la lista de archivos
+      function updateFileList(files: FileList) {
+        fileList.innerHTML = '';
+        if (files.length > 0) {
+          const fileListTitle = document.createElement('h3');
+          fileListTitle.className = 'text-[#F2F2F2] font-semibold mb-2';
+          fileListTitle.textContent = 'Archivos seleccionados:';
+          fileList.appendChild(fileListTitle);
+
+          const fileListContainer = document.createElement('div');
+          fileListContainer.className = 'space-y-2';
+          
+          Array.from(files).forEach((file) => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'flex items-center justify-between bg-[#0D0D0D] p-3 rounded-lg border border-[#BFBEB4]';
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'flex items-center space-x-2';
+            
+            // Icono según el tipo de archivo
+            const fileIcon = document.createElement('span');
+            fileIcon.className = 'text-[#59594F]';
+            if (file.name.endsWith('.pdf')) {
+              fileIcon.textContent = '📄';
+            } else if (file.name.endsWith('.doc') || file.name.endsWith('.docx')) {
+              fileIcon.textContent = '📝';
+            } else if (file.name.endsWith('.txt')) {
+              fileIcon.textContent = '📋';
+            } else {
+              fileIcon.textContent = '📎';
+            }
+            
+            const fileName = document.createElement('span');
+            fileName.className = 'text-[#BFBEB4]';
+            fileName.textContent = file.name;
+            
+            fileInfo.appendChild(fileIcon);
+            fileInfo.appendChild(fileName);
+            
+            // Botón para eliminar archivo
+            const removeButton = document.createElement('button');
+            removeButton.className = 'text-[#FF6F61] hover:text-[#FF6F61]/80 transition';
+            removeButton.textContent = '×';
+            removeButton.onclick = (e) => {
+              e.stopPropagation();
+              const dt = new DataTransfer();
+              const filesArray = Array.from(fileInput.files || []);
+              const index = filesArray.findIndex(f => f.name === file.name);
+              if (index > -1) {
+                filesArray.splice(index, 1);
+                filesArray.forEach(f => dt.items.add(f));
+                fileInput.files = dt.files;
+                generateQuizBtn.disabled = fileInput.files.length === 0;
+                updateFileList(fileInput.files);
+              }
+            };
+            
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(removeButton);
+            fileListContainer.appendChild(fileItem);
+          });
+          
+          fileList.appendChild(fileListContainer);
+        }
+      }
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-[#F2F2F2]');
+      });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-[#F2F2F2]');
+      });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-[#F2F2F2]');
+        const dataTransfer = e.dataTransfer;
+        if (dataTransfer && dataTransfer.files) {
+          fileInput.files = dataTransfer.files;
+          generateQuizBtn.disabled = !fileInput.files.length;
+          updateFileList(fileInput.files);
+        }
+      });
+      fileInput.addEventListener('change', () => {
+        generateQuizBtn.disabled = !fileInput.files?.length;
+        updateFileList(fileInput.files || new DataTransfer().files);
+      });
+
+      // Función para enviar archivos al webhook
+      async function sendFilesToWebhook(files: FileList) {
+        try {
+          const formData = new FormData();
+          Array.from(files).forEach((file) => {
+            formData.append('files', file);
+          });
+
+          const response = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log('Respuesta del webhook:', data);
+          return data;
+        } catch (error) {
+          console.error('Error al enviar archivos:', error);
+          throw error;
+        }
+      }
+
+      // Mock quiz data (replace with actual quiz generation logic)
+      let quizzes = [];
+
+      // Quiz Display
+      const quizContainer = document.getElementById('quizContainer') as HTMLDivElement;
+      const prevQuizBtn = document.getElementById('prevQuizBtn') as HTMLButtonElement;
+      const nextQuizBtn = document.getElementById('nextQuizBtn') as HTMLButtonElement;
+      let currentIndex = 0;
+
+      function renderQuizzes(startIndex = 0) {
+        const mainContainer = document.getElementById('quizContainer');
+        mainContainer.innerHTML = '';
+
+        if (quizzes.length === 0) {
+          const noQuizzesMessage = document.createElement('div');
+          noQuizzesMessage.className = 'text-center text-[#59594F] p-4';
+          noQuizzesMessage.textContent = 'No hay quizzes disponibles. Sube algunos archivos para generar quizzes.';
+          mainContainer.appendChild(noQuizzesMessage);
+          return;
+        }
+
+        // Render main quizzes (up to 5)
+        const endIndex = Math.min(startIndex + 5, quizzes.length);
+        for (let i = startIndex; i < endIndex; i++) {
+          const quiz = quizzes[i];
+          const quizCard = document.createElement('div');
+          quizCard.className = 'bg-[#142617] w-full p-6 rounded-lg shadow-md border border-[#BFBEB4]';
+          quizCard.innerHTML = `
+            <p class="font-semibold text-[#F2F2F2] mb-4">${quiz.pregunta}</p>
+            <p class="answer hidden text-[#BFBEB4] mt-2">${quiz.respuesta}</p>
+            <button class="showAnswerBtn mt-4 text-[#F2F2F2] hover:text-[#BFBEB4] transition">
+              Mostrar Respuesta
+            </button>
+          `;
+          mainContainer.appendChild(quizCard);
+        }
+
+        // Renderiza los botones de navegación debajo de los quizzes
+        const navButtons = document.createElement('div');
+        navButtons.className = 'flex justify-center gap-4 mt-6';
+        navButtons.innerHTML = `
+          <button
+            id="prevQuizBtn"
+            class="bg-[#142617] text-[#F2F2F2] px-6 py-2 rounded-lg hover:bg-[#142617]/80 transition disabled:opacity-50 border border-[#BFBEB4]"
+            ${startIndex === 0 ? 'disabled' : ''}
+          >
+            Anterior
+          </button>
+          <button
+            id="nextQuizBtn"
+            class="bg-[#142617] text-[#F2F2F2] px-6 py-2 rounded-lg hover:bg-[#142617]/80 transition disabled:opacity-50 border border-[#BFBEB4]"
+            ${endIndex === quizzes.length ? 'disabled' : ''}
+          >
+            Siguiente
+          </button>
+        `;
+        mainContainer.appendChild(navButtons);
+
+        // Reasigna los eventos a los nuevos botones
+        document.getElementById('prevQuizBtn').onclick = () => {
+          currentIndex = Math.max(currentIndex - 5, 0);
+          renderQuizzes(currentIndex);
+        };
+        document.getElementById('nextQuizBtn').onclick = () => {
+          currentIndex = Math.min(currentIndex + 5, quizzes.length - 5);
+          renderQuizzes(currentIndex);
+        };
+      }
+
+      // Initial render
+      renderQuizzes();
+
+      // Show/Hide Answer
+      document.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        if (target.classList.contains('showAnswerBtn')) {
+          const answer = target.previousElementSibling as HTMLElement;
+          answer.classList.toggle('hidden');
+          target.textContent = answer.classList.contains('hidden')
+            ? 'Mostrar Respuesta'
+            : 'Ocultar Respuesta';
+        }
+      });
+
+      // Generate Quiz Button
+      generateQuizBtn.addEventListener('click', async () => {
+        if (fileInput.files?.length) {
+          try {
+            generateQuizBtn.disabled = true;
+            generateQuizBtn.textContent = 'Enviando...';
+            
+            // Mostrar indicador de carga
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'mt-4 text-[#F2F2F2]';
+            loadingIndicator.textContent = 'Procesando archivos...';
+            dropzone.parentElement?.appendChild(loadingIndicator);
+
+            // Enviar archivos al webhook
+            const result = await sendFilesToWebhook(fileInput.files);
+            
+            // Actualizar UI con el resultado
+            loadingIndicator.textContent = '¡Archivos procesados exitosamente!';
+            loadingIndicator.className = 'mt-4 text-[#4ECDC4]';
+            
+            // Limpiar el input de archivos
+            fileInput.value = '';
+            generateQuizBtn.textContent = 'Generar Quiz';
+            generateQuizBtn.disabled = true;
+
+            // Actualizar los quizzes con los datos del webhook
+            if (result && Array.isArray(result)) {
+              quizzes = result.map(quiz => ({
+                pregunta: quiz.pregunta,
+                respuesta: quiz.respuesta
+              }));
+              currentIndex = 0;
+              renderQuizzes();
+            } else {
+              throw new Error('Formato de respuesta inválido');
+            }
+
+          } catch (error) {
+            console.error('Error:', error);
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'mt-4 text-red-500';
+            errorMessage.textContent = 'Error al procesar los archivos. Por favor, intente nuevamente.';
+            dropzone.parentElement?.appendChild(errorMessage);
+            
+            generateQuizBtn.textContent = 'Generar Quiz';
+            generateQuizBtn.disabled = false;
+          }
+        }
+      });
+    </script>
+
+    <style>
+      .scrollbar-thin {
+        scrollbar-width: thin;
+      }
+      .scrollbar-thumb-[#59594F]::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      .scrollbar-thumb-[#59594F]::-webkit-scrollbar-thumb {
+        background-color: #59594F;
+        border-radius: 4px;
+      }
+
+      /* Media Queries */
+      @media (max-width: 768px) {
+        .quiz-card {
+          width: 100% !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .quiz-card {
+          min-width: 150px !important;
+        }
+      }
+    </style>
+  </body>
+</html>
