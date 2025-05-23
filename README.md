@@ -20,7 +20,7 @@ FastQuiz is an innovative tool designed to generate educational quizzes dynamica
 * Users upload documents via a **Webhook**.
 * The tool determines the file type using a **Switch** node and processes it accordingly.
 
-![Input Stage](images\FQuizWF.jpg)
+![Input Stage](FQuizWF.jpg)
 
 ---
 
