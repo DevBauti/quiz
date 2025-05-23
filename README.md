@@ -25,12 +25,12 @@ QuizTools generates educational quizzes in Spanish from uploaded files (PDF, tex
 
 ## Workflow Diagram
 
-![Workflow Diagram](images\FQuizWF.jpg)
+![Workflow Diagram](.\images\FQuizWF.jpg)
 
 ## Screenshots
 
 - **Main Interface**:  
-  ![Main Interface](images\WindowsFQuiz.jpeg)
+![Main Interface](.\images\WindowsFQuiz.jpeg)
 
 ## Configuration
 
